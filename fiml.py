@@ -35,6 +35,8 @@ import numpy as np
 import scipy as sp
 import scipy.optimize
 
+_log2pi = np.log(2 * np.pi)
+
 def fiml(data, bias=False):
     """FIML estimation of the mean/covariance of data with missing values.
 
@@ -99,7 +101,7 @@ def _obj_func(params, dim, data_blocks):
     for obs, obs_data in data_blocks:
         obs_mean = mean[obs]
         obs_cov = cov[obs][:, obs]
-        objval += _log_likelihood(obs_data, obs_mean, obs_cov)
+        objval += _log_likelihood_composed(obs_data, obs_mean, obs_cov)
     return -objval
 
 def _obj_func_1d(params, dim, data):
@@ -126,6 +128,16 @@ def _unpack_params(dim, params):
         cov[i, j] = v
         cov[j, i] = v
     return mean, cov
+
+# Composite function of _log_likelihood() and _pdf_normal().
+def _log_likelihood_composed(x, mean, cov):
+    xshift = x - mean
+    t1 = x.shape[-1] * _log2pi
+    sign, logdet = np.linalg.slogdet(cov)
+    t2 = logdet
+    t3 = xshift.dot(np.linalg.inv(cov)) * xshift
+    size = x.shape[0] if x.ndim == 2 else 1
+    return -0.5 * ((t1 + t2) * size + t3.sum())
 
 # Log likelihood function.
 # The input x can be one- or two-dimensional.

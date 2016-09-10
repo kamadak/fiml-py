@@ -35,7 +35,9 @@ class TestFIML(unittest.TestCase):
             self.assertClose(r1, r2)
             r1 = fiml._log_likelihood_1d(x, m, c)
             r2 = fiml._log_likelihood(x, m, c)
+            r3 = fiml._log_likelihood_composed(x, m, c)
             self.assertClose(r1, r2)
+            self.assertClose(r1, r3)
 
             xx = np.random.randn(3, dim)
             r1 = np.array([fiml._pdf_normal_1d(x, m, c) for x in xx])
@@ -43,7 +45,9 @@ class TestFIML(unittest.TestCase):
             self.assertClose(r1, r2)
             r1 = sum([fiml._log_likelihood_1d(x, m, c) for x in xx])
             r2 = fiml._log_likelihood(xx, m, c)
+            r3 = fiml._log_likelihood_composed(xx, m, c)
             self.assertClose(r1, r2)
+            self.assertClose(r1, r3)
 
     def assertClose(self, expected, actual):
         #self.assertTrue(np.allclose(expected, actual))
