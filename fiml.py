@@ -62,12 +62,8 @@ def fiml(data, bias=False):
     mean0 = np.zeros(dim)
     cov0 = np.eye(dim)
     params0 = _pack_params(dim, mean0, cov0)
-    # XXX The covariance matrix is guaranteed to be symmetric (see
-    # the _pack_params function) but may be still invalid (i.e.
-    # non-positive-semidefinite) because no constraint is imposed in
-    # the optimization.
     data_blocks = _sort_missing(data)
-    result = sp.optimize.fmin(_obj_func, params0, args=(dim, data_blocks))
+    result = sp.optimize.fmin_slsqp(_obj_func, params0, args=(dim, data_blocks))
     mean, cov = _unpack_params(dim, result)
     if not bias:
         cov = cov * (size / (size - 1.0))
@@ -97,6 +93,20 @@ def _sort_missing(data):
 
 def _obj_func(params, dim, data_blocks):
     mean, cov = _unpack_params(dim, params)
+    # Check if cov is positive semidefinite.
+    # A matrix has a Cholesky decomposition iff it is symmetric and
+    # positive semidefinite.  It is said that Cholesky decomposition is
+    # faster and more numerically stable than finding eigenvalues.
+    # However, numpy.linalg.cholesky() rejects singular matrices (i.e.,
+    # strictly "semi"-definite ones).
+    # try:
+    #     _ = np.linalg.cholesky(cov)
+    # except np.linalg.LinAlgError:
+    #     return np.inf
+    if (np.linalg.eigvalsh(cov) < 0).any():
+        # XXX Returning inf is not a good idea, because many solvers
+        # cannot cope with it.
+        return np.inf
     objval = 0.0
     for obs, obs_data in data_blocks:
         obs_mean = mean[obs]
