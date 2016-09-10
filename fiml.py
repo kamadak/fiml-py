@@ -64,18 +64,50 @@ def fiml(data, bias=False):
     # the _pack_params function) but may be still invalid (i.e.
     # non-positive-semidefinite) because no constraint is imposed in
     # the optimization.
-    result = sp.optimize.fmin(_obj_func, params0, args=(dim, data))
+    data_blocks = _sort_missing(data)
+    result = sp.optimize.fmin(_obj_func, params0, args=(dim, data_blocks))
     mean, cov = _unpack_params(dim, result)
     if not bias:
         cov = cov * (size / (size - 1.0))
     return mean, cov
 
-def _obj_func(params, dim, data):
+# Sort data by the missing patterns.
+# The return value is in the following format.
+# Missing variables (columns) are removed from the data blocks.
+#  [(observation_pattern1, data_block1),
+#   (observation_pattern2, data_block2),
+#   ...]
+def _sort_missing(data):
+    # Convert them to lists so that it can be sorted by the standard
+    # comparator.
+    obsmap = ~np.isnan(data)
+    obsmap_list = map(list, obsmap)
+    # argsort.
+    sortedidx = sorted(range(data.shape[0]), key=obsmap_list.__getitem__)
+    # Split row indexes into blocks.
+    blocks = [[sortedidx[0]]]
+    for idx, prev in zip(sortedidx[1:], sortedidx[:-1]):
+        if (obsmap[prev] == obsmap[idx]).all():
+            blocks[-1].append(idx)
+        else:
+            blocks.append([idx])
+    return [(obsmap[b[0]], data[b][:, obsmap[b[0]]]) for b in blocks]
+
+def _obj_func(params, dim, data_blocks):
+    mean, cov = _unpack_params(dim, params)
+    objval = 0.0
+    for obs, obs_data in data_blocks:
+        obs_mean = mean[obs]
+        obs_cov = cov[obs][:, obs]
+        objval += _log_likelihood(obs_data, obs_mean, obs_cov)
+    return -objval
+
+def _obj_func_1d(params, dim, data):
     mean, cov = _unpack_params(dim, params)
     objval = 0.0
     for x in data:
         obs = ~np.isnan(x)
-        objval += _log_likelihood(x[obs], mean[obs], cov[obs][:, obs])
+        objval += _log_likelihood_1d(x[obs], mean[obs], cov[obs][:, obs])
     return -objval
 
 # Pack the mean and the covariance into a 1-dimensional array.
@@ -96,11 +128,25 @@ def _unpack_params(dim, params):
     return mean, cov
 
 # Log likelihood function.
+# The input x can be one- or two-dimensional.
 def _log_likelihood(x, mean, cov):
-    return np.log(_pdf_normal(x, mean, cov))
+    return np.log(_pdf_normal(x, mean, cov)).sum()
+
+# Log likelihood function.
+def _log_likelihood_1d(x, mean, cov):
+    return np.log(_pdf_normal_1d(x, mean, cov))
 
 # Probability density function of multivariate normal distribution.
+# The input x can be one- or two-dimensional.
 def _pdf_normal(x, mean, cov):
+    xshift = x - mean
+    t1 = (2 * np.pi) ** (-0.5 * x.shape[-1])
+    t2 = np.linalg.det(cov) ** (-0.5)
+    t3 = -0.5 * (xshift.dot(np.linalg.inv(cov)) * xshift).sum(axis=-1)
+    return t1 * t2 * np.exp(t3)
+
+# Probability density function of multivariate normal distribution.
+def _pdf_normal_1d(x, mean, cov):
     xshift = x - mean
     t1 = (2 * np.pi) ** (-0.5 * len(x))
     t2 = np.linalg.det(cov) ** (-0.5)

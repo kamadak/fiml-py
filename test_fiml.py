@@ -21,6 +21,35 @@ class TestFIML(unittest.TestCase):
         self.assertModestlyClose(mean1, mean2)
         self.assertModestlyClose(cov1, cov2)
 
+    # Test if _pdf_normal() and _log_likelihood() accepts
+    # both a 2-D ndarray (multiple observations) and a 1-D ndarray.
+    def test_1d_and_2d(self):
+        for dim in range(2, 10):
+            data = np.random.randn(dim * 2, dim)
+            m = data.mean(axis=0)
+            c = np.cov(data, rowvar=False)
+
+            x = np.random.randn(dim)
+            r1 = fiml._pdf_normal_1d(x, m, c)
+            r2 = fiml._pdf_normal(x, m, c)
+            self.assertClose(r1, r2)
+            r1 = fiml._log_likelihood_1d(x, m, c)
+            r2 = fiml._log_likelihood(x, m, c)
+            self.assertClose(r1, r2)
+
+            xx = np.random.randn(3, dim)
+            r1 = np.array([fiml._pdf_normal_1d(x, m, c) for x in xx])
+            r2 = fiml._pdf_normal(xx, m, c)
+            self.assertClose(r1, r2)
+            r1 = sum([fiml._log_likelihood_1d(x, m, c) for x in xx])
+            r2 = fiml._log_likelihood(xx, m, c)
+            self.assertClose(r1, r2)
+
+    def assertClose(self, expected, actual):
+        #self.assertTrue(np.allclose(expected, actual))
+        if not np.allclose(expected, actual):
+            raise AssertionError("{} != {}".format(expected, actual))
+
     def assertModestlyClose(self, expected, actual):
         # The default xtol of scipy.optimize.fmin is 1e-4.
         if not np.allclose(expected, actual, atol=1e-4):
