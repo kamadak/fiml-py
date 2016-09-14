@@ -7,6 +7,16 @@ import fiml
 import numpy as np
 
 class TestFIML(unittest.TestCase):
+    def test_missing_2d(self):
+        data = np.array(
+            ((0, 0.4, 0.5, 0.6, 1),
+             (0, 0.6, np.nan, 0.4, 1))).T
+        ans_mean = np.array((0.5, 0.5))
+        ans_cov = np.array(((0.104, 0.096), (0.096, 701.0 / 6500)))
+        mean, cov = fiml.fiml(data, bias=True)
+        self.assertModestlyClose(ans_mean, mean)
+        self.assertModestlyClose(ans_cov, cov)
+
     def test_not_missing_2d(self):
         self._test_not_missing(100, 2)
 
