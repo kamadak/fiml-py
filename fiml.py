@@ -49,6 +49,8 @@ def fiml(data, bias=False):
         A 2-D array containing variables and observations.
         Each row is an observation and each column is a variable.
         A missing value is represented by `np.nan`.
+    bias : bool, optional
+        Must be True for now.
 
     Returns
     -------
@@ -58,6 +60,9 @@ def fiml(data, bias=False):
         Estimated covariance of the variables.
     """
 
+    if not bias:
+        raise NotImplementedError("unbiased estimator is not yet implemented")
+
     size, dim = data.shape
     mean0 = np.zeros(dim)
     cov0 = np.eye(dim)
@@ -65,8 +70,6 @@ def fiml(data, bias=False):
     data_blocks = _sort_missing(data)
     result = sp.optimize.fmin_slsqp(_obj_func, params0, args=(dim, data_blocks))
     mean, cov = _unpack_params(dim, result)
-    if not bias:
-        cov = cov * (size / (size - 1.0))
     return mean, cov
 
 # Sort data by the missing patterns.

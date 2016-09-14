@@ -16,8 +16,8 @@ class TestFIML(unittest.TestCase):
     def _test_not_missing(self, size, dim):
         data = np.random.randn(size, dim)
         mean1 = data.mean(axis=0)
-        cov1 = np.cov(data, rowvar=False)
-        mean2, cov2 = fiml.fiml(data)
+        cov1 = np.cov(data, rowvar=False, bias=True)
+        mean2, cov2 = fiml.fiml(data, bias=True)
         self.assertModestlyClose(mean1, mean2)
         self.assertModestlyClose(cov1, cov2)
 
