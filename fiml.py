@@ -68,7 +68,8 @@ def fiml(data, bias=False):
     cov0 = np.eye(dim)
     params0 = _pack_params(dim, mean0, cov0)
     data_blocks = _sort_missing(data)
-    result = sp.optimize.fmin_slsqp(_obj_func, params0, args=(dim, data_blocks))
+    result = sp.optimize.fmin_slsqp(
+        _obj_func, params0, args=(dim, data_blocks), disp=False)
     mean, cov = _unpack_params(dim, result)
     return mean, cov
 
