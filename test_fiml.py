@@ -88,12 +88,12 @@ class TestFIML(unittest.TestCase):
     def assertClose(self, expected, actual):
         #self.assertTrue(np.allclose(expected, actual))
         if not np.allclose(expected, actual):
-            raise AssertionError("{} != {}".format(expected, actual))
+            self.fail("{} != {}".format(expected, actual))
 
     def assertModestlyClose(self, expected, actual):
         # The default xtol of scipy.optimize.fmin is 1e-4.
         if not np.allclose(expected, actual, atol=1e-4):
-            raise AssertionError("{} != {}".format(expected, actual))
+            self.fail("{} != {}".format(expected, actual))
 
 if __name__ == "__main__":
     unittest.main()
