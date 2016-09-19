@@ -33,6 +33,15 @@ import fiml
 import numpy as np
 
 class TestFIML(unittest.TestCase):
+    def test_pack_params(self):
+        dim = 5
+        template = fiml._pack_params(dim, np.zeros(dim), np.eye(dim))
+        params = np.random.randn(len(template))
+        mean, cov = fiml._unpack_params(dim, params)
+        self.assertNpEqual(cov, cov.T)
+        params2 = fiml._pack_params(dim, mean, cov)
+        self.assertClose(params, params2)
+
     def test_missing_2d(self):
         data = np.array(
             ((0, 0.4, 0.5, 0.6, 1),
@@ -84,6 +93,10 @@ class TestFIML(unittest.TestCase):
             r3 = fiml._log_likelihood_composed(xx, m, c)
             self.assertClose(r1, r2)
             self.assertClose(r1, r3)
+
+    def assertNpEqual(self, expected, actual):
+        if (expected != actual).any():
+            self.fail("{} != {}".format(expected, actual))
 
     def assertClose(self, expected, actual):
         #self.assertTrue(np.allclose(expected, actual))
