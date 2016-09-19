@@ -95,6 +95,23 @@ def _sort_missing(data):
             blocks.append([idx])
     return [(obsmap[b[0]], data[b][:, obsmap[b[0]]]) for b in blocks]
 
+# Pack the mean and the covariance into a 1-dimensional array.
+def _pack_params(dim, mean, cov):
+    params = np.zeros(dim + dim * (dim + 1) / 2)
+    params[:dim] = mean
+    for p, i, j in zip(range(dim * (dim + 1) / 2), *np.tril_indices(dim)):
+        params[dim + p] = cov[i, j]
+    return params
+
+# Unpack the mean and the covariance from a 1-dimensional array.
+def _unpack_params(dim, params):
+    mean = params[0:dim]
+    cov = np.zeros((dim, dim))
+    for v, i, j in zip(params[dim:], *np.tril_indices(dim)):
+        cov[i, j] = v
+        cov[j, i] = v
+    return mean, cov
+
 def _obj_func(params, dim, data_blocks):
     mean, cov = _unpack_params(dim, params)
     # Check if cov is positive semidefinite.
@@ -125,23 +142,6 @@ def _obj_func_1d(params, dim, data):
         obs = ~np.isnan(x)
         objval += _log_likelihood_1d(x[obs], mean[obs], cov[obs][:, obs])
     return -objval
-
-# Pack the mean and the covariance into a 1-dimensional array.
-def _pack_params(dim, mean, cov):
-    params = np.zeros(dim + dim * (dim + 1) / 2)
-    params[:dim] = mean
-    for p, i, j in zip(range(dim * (dim + 1) / 2), *np.tril_indices(dim)):
-        params[dim + p] = cov[i, j]
-    return params
-
-# Unpack the mean and the covariance from a 1-dimensional array.
-def _unpack_params(dim, params):
-    mean = params[0:dim]
-    cov = np.zeros((dim, dim))
-    for v, i, j in zip(params[dim:], *np.tril_indices(dim)):
-        cov[i, j] = v
-        cov[j, i] = v
-    return mean, cov
 
 # Composite function of _log_likelihood() and _pdf_normal().
 def _log_likelihood_composed(x, mean, cov):
