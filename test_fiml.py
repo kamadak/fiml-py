@@ -33,6 +33,24 @@ import fiml
 import numpy as np
 
 class TestFIML(unittest.TestCase):
+    def test_sort_missing(self):
+        data = np.array(
+            [[1, 2, 3],
+             [np.nan, 5, 6],
+             [7, np.nan, np.nan],
+             [np.nan, 11, 12],
+             [13, np.nan, np.nan]])
+        ans = [(np.array([False, True, True]),
+                np.array([[5., 6.],
+                          [11., 12.]])),
+               (np.array([True, False, False]),
+                np.array([[7.],
+                          [13.]])),
+               (np.array([True, True, True]),
+                np.array([[1., 2., 3.]]))]
+        data_blocks = fiml._sort_missing(data)
+        self.assertNpSeqEqual(ans, data_blocks)
+
     def test_pack_params(self):
         dim = 5
         template = fiml._pack_params(dim, np.zeros(dim), np.eye(dim))
@@ -106,6 +124,23 @@ class TestFIML(unittest.TestCase):
     def assertModestlyClose(self, expected, actual):
         # The default xtol of scipy.optimize.fmin is 1e-4.
         if not np.allclose(expected, actual, atol=1e-4):
+            self.fail("{} != {}".format(expected, actual))
+
+    def assertNpSeqEqual(self, expected, actual):
+        def recursive(seq1, seq2):
+            if type(seq1) is not type(seq2):
+                return False
+            if isinstance(seq1, np.ndarray):
+                return np.array_equal(seq1, seq2)
+            if isinstance(seq1, (list, tuple)):
+                if len(seq1) != len(seq2):
+                    return False
+                for sub1, sub2 in zip(seq1, seq2):
+                    if not recursive(sub1, sub2):
+                        return False
+                return True
+            return seq1 == seq2
+        if not recursive(expected, actual):
             self.fail("{} != {}".format(expected, actual))
 
 if __name__ == "__main__":
