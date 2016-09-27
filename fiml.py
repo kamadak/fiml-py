@@ -96,6 +96,9 @@ def _sort_missing(data):
     return [(obsmap[b[0]], data[b][:, obsmap[b[0]]]) for b in blocks]
 
 # Pack the mean and the covariance into a 1-dimensional array.
+# - The first N values are the means.
+# - The remaining N (N + 1) / 2 values are the lower triangular matrix
+#   of the covariance.
 def _pack_params(dim, mean, cov):
     params = np.zeros(dim + dim * (dim + 1) / 2)
     params[:dim] = mean
