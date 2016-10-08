@@ -1,2 +1,11 @@
 Full Information Maximum Likelihood for Python
 ----------------------------------------------
+
+   This is a Python/NumPy implementation of full information maximum
+   likelihood (FIML) method to estimate the mean and the covariance of
+   data with missing values.
+
+Prerequisites
+-------------
+
+   NumPy and SciPy are required to run this software.
