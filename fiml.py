@@ -100,19 +100,18 @@ def _sort_missing(data):
 # - The remaining N (N + 1) / 2 values are the lower triangular matrix
 #   of the covariance.
 def _pack_params(dim, mean, cov):
-    params = np.zeros(dim + dim * (dim + 1) / 2)
+    params = np.empty(dim + dim * (dim + 1) / 2)
     params[:dim] = mean
-    for p, i, j in zip(range(dim * (dim + 1) / 2), *np.tril_indices(dim)):
-        params[dim + p] = cov[i, j]
+    params[dim:] = cov[np.tril_indices(dim)]
     return params
 
 # Unpack the mean and the covariance from a 1-dimensional array.
 def _unpack_params(dim, params):
     mean = params[0:dim]
-    cov = np.zeros((dim, dim))
-    for v, i, j in zip(params[dim:], *np.tril_indices(dim)):
-        cov[i, j] = v
-        cov[j, i] = v
+    cov = np.empty((dim, dim))
+    ii, jj = np.tril_indices(dim)
+    cov[ii, jj] = params[dim:]
+    cov[jj, ii] = params[dim:]
     return mean, cov
 
 def _obj_func(params, dim, data_blocks):
