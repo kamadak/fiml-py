@@ -70,6 +70,9 @@ class TestFIML(unittest.TestCase):
         self.assertModestlyClose(ans_mean, mean)
         self.assertModestlyClose(ans_cov, cov)
 
+    def test_not_missing_1d(self):
+        self._test_not_missing(100, 1)
+
     def test_not_missing_2d(self):
         self._test_not_missing(100, 2)
 
