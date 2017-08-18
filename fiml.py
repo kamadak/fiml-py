@@ -80,12 +80,9 @@ def fiml(data, bias=False):
 #   (observation_pattern2, data_block2),
 #   ...]
 def _sort_missing(data):
-    # Convert them to lists so that it can be sorted by the standard
-    # comparator.
+    # Argsort the rows of obsmap.
     obsmap = ~np.isnan(data)
-    obsmap_list = map(list, obsmap)
-    # argsort.
-    sortedidx = sorted(range(data.shape[0]), key=obsmap_list.__getitem__)
+    sortedidx = sorted(range(data.shape[0]), key=lambda i: list(obsmap[i]))
     # Split row indexes into blocks.
     blocks = [[sortedidx[0]]]
     for idx, prev in zip(sortedidx[1:], sortedidx[:-1]):
@@ -100,7 +97,7 @@ def _sort_missing(data):
 # - The remaining N (N + 1) / 2 values are the lower triangular matrix
 #   of the covariance.
 def _pack_params(dim, mean, cov):
-    params = np.empty(dim + dim * (dim + 1) / 2)
+    params = np.empty(dim + dim * (dim + 1) // 2)
     params[:dim] = mean
     params[dim:] = cov[np.tril_indices(dim)]
     return params
