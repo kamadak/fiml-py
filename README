@@ -9,3 +9,8 @@ Prerequisites
 -------------
 
    NumPy and SciPy are required to run this software.
+
+Caveats
+-------
+
+   The input data must not contain linearly dependent variables.
